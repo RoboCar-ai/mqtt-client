@@ -1,3 +1,10 @@
+from jwt_generator import create_jwt
+import ssl
+import paho.mqtt.client as mqtt
+from time import sleep
+from get_images import get_images
+from models.Image_pb2 import Image
+
 def error_str(rc):
     """Convert a Paho error to a human readable string."""
     return '{}: {}'.format(rc, mqtt.error_string(rc))
@@ -36,6 +43,10 @@ def on_message(unused_client, unused_userdata, message):
             payload, message.topic, str(message.qos)))
 
 
+def on_log(client, userdata, level, buf):
+    print(buf)
+
+
 def get_client(
         project_id, cloud_region, registry_id, device_id, private_key_file,
         algorithm, ca_certs, mqtt_bridge_hostname, mqtt_bridge_port):
@@ -65,7 +76,9 @@ def get_client(
     client.on_connect = on_connect
     client.on_publish = on_publish
     client.on_disconnect = on_disconnect
+    client.on_publish = on_publish
     client.on_message = on_message
+    client.on_log = on_log
 
     # Connect to the Google MQTT bridge.
     client.connect(mqtt_bridge_hostname, mqtt_bridge_port)
@@ -77,3 +90,41 @@ def get_client(
     client.subscribe(mqtt_config_topic, qos=1)
 
     return client
+
+
+if __name__ == '__main__':
+    client = get_client(
+        project_id='sacred-reality-201417',
+        registry_id='robocar-ai',
+        device_id='donkey',
+        private_key_file='keys/rsa_private.pem',
+        algorithm='RS256',
+        mqtt_bridge_hostname='mqtt.googleapis.com',
+        mqtt_bridge_port=443,
+        cloud_region='us-central1',
+        ca_certs='keys/roots.pem')
+    client.loop_start()
+    image_file_names = get_images()
+    for image in image_file_names:
+        with open(image, 'rb') as f:
+            image = Image()
+            image.data = f.read()
+            image.name = 'test'
+            res = client.publish('/devices/donkey/events', image.SerializeToString())
+            print('{} is published {}'.format(image, res.is_published()))
+            res.wait_for_publish()
+
+
+    sleep(5)  # Time in seconds.
+    # run = True
+    # while run:
+    #     client.loop()
+    #     client.
+    client.disconnect()
+
+    client.loop_stop()
+
+
+
+
+

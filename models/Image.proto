@@ -8,5 +8,8 @@ message Image {
 }
 
 message InputTelemetry {
-
+    required string mode = 1;
+    required float steering_angle = 2;
+    required float throttle = 3;
+    required float image_id = 4;
 }

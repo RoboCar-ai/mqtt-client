@@ -1,3 +1,6 @@
+import datetime as dt
+import jwt
+
 def create_jwt(project_id, private_key_file, algorithm):
     """Creates a JWT (https://jwt.io) to establish an MQTT connection.
         Args:
@@ -14,12 +17,12 @@ def create_jwt(project_id, private_key_file, algorithm):
         """
 
     token = {
-            # The time that the token was issued at
-            'iat': datetime.datetime.utcnow(),
-            # The time the token expires.
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
-            # The audience field should always be set to the GCP project id.
-            'aud': project_id
+        # The time that the token was issued at
+        'iat': dt.datetime.utcnow(),
+        # The time the token expires.
+        'exp': dt.datetime.utcnow() + dt.timedelta(minutes=60),
+        # The audience field should always be set to the GCP project id.
+        'aud': project_id
     }
 
     # Read the private key file.

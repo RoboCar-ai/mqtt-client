@@ -1,0 +1,2 @@
+pyjwt
+paho-mqtt
